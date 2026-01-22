@@ -1,0 +1,11 @@
+{
+  "autoload": {
+    "psr-4": {
+      "Core\\": "Core/",
+      "Storage\\": "Storage/",
+      "Security\\": "Security/",
+      "Utils\\": "Utils/"
+    }
+  },
+  "require": {}
+}
