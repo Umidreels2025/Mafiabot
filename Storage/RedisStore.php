@@ -1,31 +1,42 @@
 <?php
 namespace Storage;
 
-use Redis;
-
 class RedisStore
 {
-    private Redis $r;
+    private string $dir;
 
-    public function __construct(array $cfg)
+    public function __construct(array $cfg = [])
     {
-        $this->r = new Redis();
-        $this->r->connect($cfg['host'], $cfg['port']);
-        $this->r->select($cfg['db']);
+        $this->dir = __DIR__ . '/../tmp';
+        if (!is_dir($this->dir)) {
+            mkdir($this->dir, 0777, true);
+        }
     }
 
-    public function get($k)
+    private function path(string $key): string
     {
-        $v = $this->r->get($k);
-        return json_decode($v, true) ?? $v;
+        return $this->dir . '/' . md5($key) . '.json';
     }
 
-    public function set($k, $v, $ttl=null)
+    public function get(string $key)
     {
-        $v = is_array($v) ? json_encode($v) : $v;
-        $ttl ? $this->r->setex($k,$ttl,$v) : $this->r->set($k,$v);
+        $file = $this->path($key);
+        if (!file_exists($file)) return null;
+        return json_decode(file_get_contents($file), true);
     }
 
-    public function del($k){ $this->r->del($k); }
-    public function exists($k){ return $this->r->exists($k); }
+    public function set(string $key, $value, int $ttl = null)
+    {
+        file_put_contents($this->path($key), json_encode($value));
+    }
+
+    public function del(string $key)
+    {
+        @unlink($this->path($key));
+    }
+
+    public function exists(string $key): bool
+    {
+        return file_exists($this->path($key));
+    }
 }
